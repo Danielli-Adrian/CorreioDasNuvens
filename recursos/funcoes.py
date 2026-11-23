@@ -1,60 +1,47 @@
-import os, time
 import json
+import os
 from datetime import datetime
 
+
 def limpar_tela():
-    os.system("cls")
-    
-def aguarde(segundos):
-    time.sleep(segundos)
-    
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
+
+
 def inicializarBancoDeDados():
-    # r - read, w - write, a - append
-    try:
-        banco = open("base.atitus","r")
-    except:
-        print("Banco de Dados Inexistente. Criando...")
-        banco = open("base.atitus","w")
-    
+    banco = open("log.dat", "a", encoding="utf-8")
+    banco.close()
+
+
 def escreverDados(nome, pontos):
-    # INI - inserindo no arquivo
-    banco = open("base.atitus","r")
-    dados = banco.read()
+    agora = datetime.now()
+    partida = {
+        "nome": nome,
+        "pontos": pontos,
+        "data": agora.strftime("%d/%m/%Y"),
+        "hora": agora.strftime("%H:%M:%S")
+    }
+    banco = open("log.dat", "a", encoding="utf-8")
+    banco.write(json.dumps(partida, ensure_ascii=False) + "\n")
     banco.close()
-    if dados != "":
-        dadosDict = json.loads(dados)
-    else:
-        dadosDict = {}
-        
-    data_br = datetime.now().strftime("%d/%m/%Y")
-    dadosDict[nome] = (pontos, data_br)
-    
-    banco = open("base.atitus","w")
-    banco.write(json.dumps(dadosDict))
-    banco.close()
-    
-    # END - inserindo no arquivo
-    
+
+
 def maior_pontuador():
-    banco = open("base.atitus","r")
-    dados = banco.read()
+    nomeMaior = None
+    maiorPontos = -1
+    dataJogada = None
+    horaJogada = None
+
+    banco = open("log.dat", "r", encoding="utf-8")
+    for linha in banco:
+        if linha.strip():
+            partida = json.loads(linha)
+            if partida["pontos"] > maiorPontos:
+                nomeMaior = partida["nome"]
+                maiorPontos = partida["pontos"]
+                dataJogada = partida["data"]
+                horaJogada = partida["hora"]
     banco.close()
-    if dados != "":
-        dadosDict = json.loads(dados)
-    else:
-        dadosDict = {}
-
-    nome_maior = None
-    dataJogada =  None
-    maior_pontos = -1
-
-    for nome, info in dadosDict.items():
-
-        pontos = info[0]
-        
-        if pontos > maior_pontos:
-            maior_pontos = pontos
-            nome_maior = nome
-            dataJogada = info[1]            
-
-    return nome_maior, maior_pontos, dataJogada
+    return nomeMaior, maiorPontos, dataJogada, horaJogada
